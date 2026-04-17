@@ -74,6 +74,16 @@ export async function deleteExpense(id: string): Promise<void> {
   await AsyncStorage.setItem(EXPENSES_KEY, JSON.stringify(filtered));
 }
 
+export async function updateExpense(id: string, updated: Partial<Expense>): Promise<void> {
+  const all = await getAllExpenses();
+  const idx = all.findIndex((e) => e.id === id);
+  if (idx >= 0) {
+    all[idx] = { ...all[idx], ...updated };
+    await AsyncStorage.setItem(EXPENSES_KEY, JSON.stringify(all));
+  }
+}
+
+
 // ─── Review helpers ───────────────────────────────────────────────────────────
 export async function getAllReviews(): Promise<Review[]> {
   try {

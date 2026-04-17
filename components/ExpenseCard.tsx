@@ -7,9 +7,11 @@ import type { Expense } from '../utils/db';
 interface Props {
   expense: Expense;
   onDelete?: (id: string) => void;
+  onPress?: (id: string) => void;
 }
 
-export default function ExpenseCard({ expense, onDelete }: Props) {
+export default function ExpenseCard({ expense, onDelete, onPress }: Props) {
+
   const meta = CategoryMeta[expense.category as Category];
 
   const handleLongPress = () => {
@@ -27,9 +29,11 @@ export default function ExpenseCard({ expense, onDelete }: Props) {
   return (
     <TouchableOpacity
       style={styles.card}
+      onPress={() => onPress?.(expense.id)}
       onLongPress={handleLongPress}
       activeOpacity={0.75}
     >
+
       <View style={[styles.iconBadge, { backgroundColor: meta.muted }]}>
         <Text style={styles.icon}>{meta.icon}</Text>
       </View>

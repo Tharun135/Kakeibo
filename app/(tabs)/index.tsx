@@ -3,7 +3,7 @@ import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
   StatusBar, RefreshControl
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Colors, FontSize, FontWeight, Radius, Spacing, CATEGORIES, CategoryMeta } from '../../constants/theme';
 import {
   currentMonthKey, currentMonthLabel, todayString,
@@ -15,7 +15,9 @@ import ExpenseCard from '../../components/ExpenseCard';
 import { deleteExpense } from '../../utils/db';
 
 export default function DashboardScreen() {
+  const router = useRouter();
   const [income, setIncome] = useState(0);
+
   const [savingGoal, setSavingGoal] = useState(0);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -146,9 +148,15 @@ export default function DashboardScreen() {
           </View>
         ) : (
           todayExpenses.map((e) => (
-            <ExpenseCard key={e.id} expense={e} onDelete={handleDelete} />
+            <ExpenseCard 
+              key={e.id} 
+              expense={e} 
+              onDelete={handleDelete} 
+              onPress={(id) => router.push({ pathname: '/edit-expense', params: { id } })}
+            />
           ))
         )}
+
 
         {/* Category summary */}
         {expenses.filter((e) => e.date.startsWith(monthKey)).length > 0 && (
