@@ -12,7 +12,7 @@ import {
 import { getAllExpenses, getIncomeForMonth, getReview, saveReview, type Expense, type Review } from '../../utils/db';
 import ReflectionBox from '../../components/ReflectionBox';
 
-const KAKEBO_QUESTIONS = [
+const KAKEIBO_QUESTIONS = [
   { key: 'q1', prompt: '1. What was my income this month?', placeholder: 'Reflect on what you earned...' },
   { key: 'q2', prompt: '2. How much did I save?', placeholder: 'Honest savings amount and why...' },
   { key: 'q3', prompt: '3. How much did I spend unnecessarily?', placeholder: 'Be honest. What could you have skipped?' },
@@ -121,16 +121,16 @@ export default function MonthlyReviewScreen() {
           </View>
         )}
 
-        {/* The Kakebo 4 Questions */}
+        {/* The KAKEIBO 4 Questions */}
         <View style={styles.questionsHeader}>
           <Text style={styles.questionsIcon}>✍️</Text>
           <View>
-            <Text style={styles.questionsTitle}>The Kakebo Questions</Text>
+            <Text style={styles.questionsTitle}>The KAKEIBO Questions</Text>
             <Text style={styles.questionsSubtitle}>Write your answers. Be honest with yourself.</Text>
           </View>
         </View>
 
-        {KAKEBO_QUESTIONS.map((q) => (
+        {KAKEIBO_QUESTIONS.map((q) => (
           <ReflectionBox
             key={q.key}
             label={q.prompt}

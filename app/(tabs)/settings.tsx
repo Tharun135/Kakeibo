@@ -66,11 +66,11 @@ export default function SettingsScreen() {
         <Text style={styles.title}>Settings</Text>
         <Text style={styles.subtitle}>{monthLabel}</Text>
 
-        {/* Kakebo guide */}
+        {/* KAKEIBO guide */}
         <View style={styles.guideCard}>
           <Text style={styles.guideIcon}>📒</Text>
           <View style={styles.guideText}>
-            <Text style={styles.guideTitle}>Kakebo Method</Text>
+            <Text style={styles.guideTitle}>KAKEIBO Method</Text>
             <Text style={styles.guideSub}>
               Set your income and savings goal at the start of the month.
               The remainder is your spendable budget. Track every rupee manually.

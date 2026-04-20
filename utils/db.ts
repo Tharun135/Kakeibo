@@ -1,9 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ─── Keys ────────────────────────────────────────────────────────────────────
-const INCOME_KEY = '@kakebo/income';
-const EXPENSES_KEY = '@kakebo/expenses';
-const REVIEWS_KEY = '@kakebo/reviews';
+const INCOME_KEY = '@kakeibo/income';
+const EXPENSES_KEY = '@kakeibo/expenses';
+const REVIEWS_KEY = '@kakeibo/reviews';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface IncomeRecord {

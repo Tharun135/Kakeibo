@@ -1,4 +1,4 @@
-// Kakebo App — Design System Tokens
+// KAKEIBO App — Design System Tokens
 
 export const Colors = {
   // Backgrounds
@@ -7,7 +7,7 @@ export const Colors = {
   card: '#222222',
   cardBorder: '#2E2E2E',
 
-  // Accent — Kakebo gold
+  // Accent — KAKEIBO gold
   accent: '#D4A853',
   accentLight: '#E8C47A',
   accentMuted: 'rgba(212, 168, 83, 0.15)',

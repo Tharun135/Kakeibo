@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Kakebo",
-    "slug": "Kakebo",
+    "name": "KAKEIBO",
+    "slug": "kakeibo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "kakebo",
+    "scheme": "kakeibo",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
@@ -17,7 +17,7 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.tharun135.kakebo",
+      "package": "com.tharun135.kakeibo",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"

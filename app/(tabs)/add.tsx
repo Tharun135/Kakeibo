@@ -22,7 +22,7 @@ export default function AddExpenseScreen() {
       return;
     }
     if (!description.trim()) {
-      Alert.alert('Missing Description', 'Describe this expense — Kakebo requires manual awareness.');
+      Alert.alert('Missing Description', 'Describe this expense — KAKEIBO requires manual awareness.');
       return;
     }
 
@@ -53,7 +53,7 @@ export default function AddExpenseScreen() {
 
         {/* Title */}
         <Text style={styles.title}>Record Expense</Text>
-        <Text style={styles.subtitle}>Manual entry is the Kakebo way</Text>
+        <Text style={styles.subtitle}>Manual entry is the KAKEIBO way</Text>
 
         {/* Amount */}
         <View style={styles.fieldGroup}>

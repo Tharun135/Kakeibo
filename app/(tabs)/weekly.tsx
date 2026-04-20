@@ -93,7 +93,7 @@ export default function WeeklyReviewScreen() {
           ))}
         </View>
 
-        {/* Kakebo reflection questions */}
+        {/* KAKEIBO reflection questions */}
         <View style={styles.questionCard}>
           <Text style={styles.questionIcon}>🪞</Text>
           <Text style={styles.questionTitle}>Reflection Questions</Text>

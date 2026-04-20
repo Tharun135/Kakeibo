@@ -1,4 +1,4 @@
-// Date and calculation utilities for Kakebo
+// Date and calculation utilities for KAKEIBO
 
 // ─── Month ────────────────────────────────────────────────────────────────────
 export function currentMonthKey(): string {

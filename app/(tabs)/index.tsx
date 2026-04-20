@@ -65,7 +65,7 @@ export default function DashboardScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.greeting}>Kakebo</Text>
+            <Text style={styles.greeting}>KAKEIBO</Text>
             <Text style={styles.month}>{monthLabel}</Text>
           </View>
           <View style={styles.monthBadge}>
@@ -144,7 +144,7 @@ export default function DashboardScreen() {
           <View style={styles.emptyCard}>
             <Text style={styles.emptyIcon}>🌿</Text>
             <Text style={styles.emptyText}>No expenses recorded today.</Text>
-            <Text style={styles.emptyHint}>Tap + to add one manually — that's the Kakebo way.</Text>
+            <Text style={styles.emptyHint}>Tap + to add one manually — that's the KAKEIBO way.</Text>
           </View>
         ) : (
           todayExpenses.map((e) => (
