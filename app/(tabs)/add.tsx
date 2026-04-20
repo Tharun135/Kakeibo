@@ -13,6 +13,7 @@ export default function AddExpenseScreen() {
   const [category, setCategory] = useState<Category>('Needs');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState(todayString());
+  const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Credit Card'>('Cash');
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -34,12 +35,15 @@ export default function AddExpenseScreen() {
         category,
         description: description.trim(),
         date,
+        paymentMethod,
+        isSettled: paymentMethod === 'Cash', // Cash is always "settled"
       });
       // Reset form
       setAmount('');
       setDescription('');
       setDate(todayString());
       setCategory('Needs');
+      setPaymentMethod('Cash');
       Alert.alert('✓ Expense Saved', `${description} — ₹${parsed.toLocaleString('en-IN')} recorded.`);
     } finally {
       setSaving(false);
@@ -70,6 +74,28 @@ export default function AddExpenseScreen() {
               returnKeyType="done"
               maxLength={10}
             />
+          </View>
+        </View>
+
+        {/* Payment Method */}
+        <View style={styles.fieldGroup}>
+          <Text style={styles.fieldLabel}>PAYMENT METHOD</Text>
+          <View style={styles.toggleRow}>
+            {(['Cash', 'Credit Card'] as const).map((method) => {
+              const selected = paymentMethod === method;
+              return (
+                <TouchableOpacity
+                  key={method}
+                  style={[styles.toggleBtn, selected && styles.toggleBtnActive]}
+                  onPress={() => setPaymentMethod(method)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.toggleText, selected && styles.toggleTextActive]}>
+                    {method === 'Cash' ? '💵 Cash' : '💳 Credit Card'}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
 
@@ -163,6 +189,16 @@ const styles = StyleSheet.create({
   },
   currencySign: { fontSize: FontSize.xxl, fontWeight: FontWeight.bold, color: Colors.accent, marginRight: Spacing.sm },
   amountInput: { flex: 1, fontSize: FontSize.xxxl, fontWeight: FontWeight.bold, color: Colors.textPrimary, paddingVertical: Spacing.md },
+  
+  toggleRow: { flexDirection: 'row', gap: Spacing.sm },
+  toggleBtn: {
+    flex: 1, backgroundColor: Colors.card, borderRadius: Radius.md,
+    borderWidth: 1.5, borderColor: Colors.cardBorder, padding: Spacing.md,
+    alignItems: 'center',
+  },
+  toggleBtnActive: { borderColor: Colors.accent, backgroundColor: Colors.accent + '15' },
+  toggleText: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.textSecondary },
+  toggleTextActive: { color: Colors.accent },
 
   categoryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
   catCard: {

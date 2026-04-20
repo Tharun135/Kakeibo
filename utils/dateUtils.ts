@@ -95,3 +95,17 @@ export function computeCategoryTotals(
   }
   return totals;
 }
+
+export function isWeeklyReviewDue(targetDay = 0): boolean {
+  const d = new Date();
+  const day = d.getDay(); // 0=Sun, 1=Mon...
+  // In Expo 1=Sun, 2=Mon... so targetDay - 1 converts to 0=Sun
+  const adjustedTarget = targetDay - 1;
+  return day === adjustedTarget || (day === 0 && adjustedTarget === -1);
+}
+
+export function isMonthlyReviewDue(targetDate = 1): boolean {
+  const d = new Date();
+  const date = d.getDate();
+  return date === targetDate || date === (targetDate + 1) || date === (targetDate + 2); 
+}

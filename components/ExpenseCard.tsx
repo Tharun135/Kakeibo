@@ -45,7 +45,10 @@ export default function ExpenseCard({ expense, onDelete, onPress }: Props) {
           <View style={[styles.catPill, { backgroundColor: meta.muted }]}>
             <Text style={[styles.catText, { color: meta.color }]}>{expense.category}</Text>
           </View>
-          <Text style={styles.date}>{formatDisplayDate(expense.date)}</Text>
+          <Text style={styles.date}>
+            {formatDisplayDate(expense.date)} • {expense.paymentMethod === 'Credit Card' ? '💳' : '💵'}
+            {expense.paymentMethod === 'Credit Card' && expense.isSettled && ' ✅'}
+          </Text>
         </View>
       </View>
       <Text style={styles.amount}>{formatCurrency(expense.amount)}</Text>

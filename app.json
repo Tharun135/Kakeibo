@@ -20,7 +20,7 @@
       "package": "com.tharun135.kakeibo",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#1A1A1A"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false

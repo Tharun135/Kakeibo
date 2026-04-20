@@ -7,9 +7,10 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { Colors, FontSize, FontWeight, Radius, Spacing, CATEGORIES, CategoryMeta } from '../../constants/theme';
 import {
   currentMonthKey, currentMonthLabel, todayString,
-  formatCurrency, computeSpendable, computeSpent, computeRemaining
+  formatCurrency, computeSpendable, computeSpent, computeRemaining,
+  isWeeklyReviewDue, isMonthlyReviewDue
 } from '../../utils/dateUtils';
-import { getAllExpenses, getIncomeForMonth, type Expense } from '../../utils/db';
+import { getAllExpenses, getIncomeForMonth, getConfig, type Expense } from '../../utils/db';
 import SummaryCard from '../../components/SummaryCard';
 import ExpenseCard from '../../components/ExpenseCard';
 import { deleteExpense } from '../../utils/db';
@@ -17,11 +18,11 @@ import { deleteExpense } from '../../utils/db';
 export default function DashboardScreen() {
   const router = useRouter();
   const [income, setIncome] = useState(0);
-
   const [savingGoal, setSavingGoal] = useState(0);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [monthLabel, setMonthLabel] = useState('');
+  const [config, setConfig] = useState<any>(null);
 
   const load = useCallback(async () => {
     const monthKey = currentMonthKey();
@@ -31,6 +32,8 @@ export default function DashboardScreen() {
     setSavingGoal(rec?.saving_goal ?? 0);
     const all = await getAllExpenses();
     setExpenses(all);
+    const conf = await getConfig();
+    setConfig(conf);
   }, []);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
@@ -53,6 +56,11 @@ export default function DashboardScreen() {
 
   const incomeNotSet = income === 0;
 
+  // Group all expenses of this month by date for the list
+  const currentMonthExpenses = expenses
+    .filter((e) => e.date.startsWith(monthKey))
+    .sort((a, b) => b.date.localeCompare(a.date) || b.amount - a.amount);
+
   return (
     <View style={styles.root}>
       <StatusBar barStyle="light-content" backgroundColor={Colors.bg} />
@@ -72,6 +80,29 @@ export default function DashboardScreen() {
             <Text style={styles.monthBadgeText}>📒</Text>
           </View>
         </View>
+
+        {/* Review reminders */}
+        {isWeeklyReviewDue(config?.weeklyDay ?? 1) && (
+          <TouchableOpacity 
+            style={[styles.alertBanner, { backgroundColor: Colors.successMuted, borderColor: Colors.success + '44' }]}
+            onPress={() => router.push('/weekly')}
+          >
+            <Text style={[styles.alertText, { color: Colors.success }]}>
+              📓 Time for your Weekly Review!
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        {isMonthlyReviewDue(config?.monthlyDate ?? 1) && (
+          <TouchableOpacity 
+            style={[styles.alertBanner, { backgroundColor: Colors.accentMuted, borderColor: Colors.accent + '44' }]}
+            onPress={() => router.push('/monthly')}
+          >
+            <Text style={[styles.alertText, { color: Colors.accent }]}>
+              💰 Time for your Monthly Review!
+            </Text>
+          </TouchableOpacity>
+        )}
 
         {/* Income not set banner */}
         {incomeNotSet && (
@@ -134,20 +165,36 @@ export default function DashboardScreen() {
           <Text style={styles.savedGoal}>Goal: {formatCurrency(savingGoal)}</Text>
         </View>
 
-        {/* Today's expenses */}
+        {/* Pending Card Payments Bucket */}
+        {expenses.some(e => e.paymentMethod === 'Credit Card' && !e.isSettled) && (
+          <View style={styles.bucketCard}>
+            <View style={styles.bucketHeader}>
+              <Text style={styles.bucketEmoji}>💳</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.bucketTitle}>Credit Card Payment Bucket</Text>
+                <Text style={styles.bucketSub}>Total pending transfer from bank</Text>
+              </View>
+              <Text style={styles.bucketValue}>
+                {formatCurrency(expenses.filter(e => e.paymentMethod === 'Credit Card' && !e.isSettled).reduce((s, e) => s + e.amount, 0))}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Recent activity */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Today's Spending</Text>
-          <Text style={styles.sectionSub}>{formatCurrency(todayExpenses.reduce((s, e) => s + e.amount, 0))}</Text>
+          <Text style={styles.sectionTitle}>Recent Spending</Text>
+          <Text style={styles.sectionSub}>{formatCurrency(spent)} total</Text>
         </View>
 
-        {todayExpenses.length === 0 ? (
+        {currentMonthExpenses.length === 0 ? (
           <View style={styles.emptyCard}>
             <Text style={styles.emptyIcon}>🌿</Text>
-            <Text style={styles.emptyText}>No expenses recorded today.</Text>
-            <Text style={styles.emptyHint}>Tap + to add one manually — that's the KAKEIBO way.</Text>
+            <Text style={styles.emptyText}>No expenses recorded this month.</Text>
+            <Text style={styles.emptyHint}>Tap + to start your KAKEIBO journey.</Text>
           </View>
         ) : (
-          todayExpenses.map((e) => (
+          currentMonthExpenses.map((e) => (
             <ExpenseCard 
               key={e.id} 
               expense={e} 
@@ -225,6 +272,17 @@ const styles = StyleSheet.create({
   savedLabel: { fontSize: FontSize.sm, color: Colors.textSecondary, marginBottom: Spacing.xs },
   savedValue: { fontSize: FontSize.xxl, fontWeight: FontWeight.heavy },
   savedGoal: { fontSize: FontSize.xs, color: Colors.textMuted, marginTop: 4 },
+
+  bucketCard: {
+    backgroundColor: '#1E2530', borderRadius: Radius.lg, borderWidth: 1,
+    borderColor: '#34495E', padding: Spacing.md, marginBottom: Spacing.xl,
+  },
+  bucketHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
+  bucketEmoji: { fontSize: 24 },
+  bucketTitle: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: Colors.textPrimary },
+  bucketSub: { fontSize: FontSize.xs, color: Colors.textSecondary },
+  bucketValue: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.warning },
+
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.md },
   sectionTitle: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.textPrimary },
   sectionSub: { fontSize: FontSize.md, fontWeight: FontWeight.semibold, color: Colors.accent },

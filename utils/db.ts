@@ -4,6 +4,43 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const INCOME_KEY = '@kakeibo/income';
 const EXPENSES_KEY = '@kakeibo/expenses';
 const REVIEWS_KEY = '@kakeibo/reviews';
+const CONFIG_KEY = '@kakeibo/config';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+export interface AppConfig {
+  weeklyReminderHour: number; // 0-23
+  weeklyReminderMinute: number; // 0-59
+  weeklyDay: number; // 1-7 (1=Sun, 2=Mon... in Expo Notifications)
+  monthlyReminderHour: number; // 0-23
+  monthlyReminderMinute: number; // 0-59
+  monthlyDate: number; // 1-31
+  remindersEnabled: boolean;
+}
+
+const DEFAULT_CONFIG: AppConfig = {
+  weeklyReminderHour: 20,
+  weeklyReminderMinute: 0,
+  weeklyDay: 1, // Sunday
+  monthlyReminderHour: 9,
+  monthlyReminderMinute: 0,
+  monthlyDate: 1, // 1st
+  remindersEnabled: false,
+};
+
+export async function getConfig(): Promise<AppConfig> {
+  try {
+    const raw = await AsyncStorage.getItem(CONFIG_KEY);
+    return raw ? { ...DEFAULT_CONFIG, ...JSON.parse(raw) } : DEFAULT_CONFIG;
+  } catch {
+    return DEFAULT_CONFIG;
+  }
+}
+
+export async function saveConfig(config: Partial<AppConfig>): Promise<void> {
+  const current = await getConfig();
+  const updated = { ...current, ...config };
+  await AsyncStorage.setItem(CONFIG_KEY, JSON.stringify(updated));
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface IncomeRecord {
@@ -19,6 +56,8 @@ export interface Expense {
   category: 'Needs' | 'Wants' | 'Culture' | 'Unexpected';
   description: string;
   date: string; // "YYYY-MM-DD"
+  paymentMethod: 'Cash' | 'Credit Card';
+  isSettled?: boolean; // True if money transferred from bank to CC
 }
 
 export interface Review {

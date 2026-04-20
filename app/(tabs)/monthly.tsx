@@ -62,7 +62,9 @@ export default function MonthlyReviewScreen() {
   const spent = computeSpent(expenses, monthKey);
   const spendable = computeSpendable(income, savingGoal);
   const saved = Math.max(0, spendable - spent);
-  const totals = computeCategoryTotals(monthExpenses);
+  const catTotals = computeCategoryTotals(monthExpenses);
+  const cashTotal = monthExpenses.filter((e) => e.paymentMethod === 'Cash').reduce((s, e) => s + e.amount, 0);
+  const creditTotal = monthExpenses.filter((e) => e.paymentMethod === 'Credit Card').reduce((s, e) => s + e.amount, 0);
 
   return (
     <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -100,12 +102,30 @@ export default function MonthlyReviewScreen() {
           </View>
         </View>
 
+        {/* Payment Breakdown */}
+        {monthExpenses.length > 0 && (
+          <View style={styles.paymentCard}>
+            <Text style={styles.catTitle}>Payment Method Analysis</Text>
+            <View style={styles.paymentRow}>
+              <View style={styles.paymentItem}>
+                <Text style={styles.paymentLabel}>💵 CASH</Text>
+                <Text style={styles.paymentValue}>{formatCurrency(cashTotal)}</Text>
+              </View>
+              <View style={styles.paymentDivider} />
+              <View style={styles.paymentItem}>
+                <Text style={styles.paymentLabel}>💳 CREDIT CARD</Text>
+                <Text style={[styles.paymentValue, { color: Colors.warning }]}>{formatCurrency(creditTotal)}</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
         {/* Category breakdown */}
         {monthExpenses.length > 0 && (
           <View style={styles.catCard}>
             <Text style={styles.catTitle}>Spending Breakdown</Text>
             {CATEGORIES.map((cat) => {
-              const amt = totals[cat];
+              const amt = catTotals[cat];
               if (amt === 0) return null;
               const meta = CategoryMeta[cat];
               const pct = spent > 0 ? Math.round((amt / spent) * 100) : 0;
@@ -163,6 +183,16 @@ const styles = StyleSheet.create({
   statItem: { width: '45%' },
   statLabel: { fontSize: FontSize.xs, color: Colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 4 },
   statValue: { fontSize: FontSize.xl, fontWeight: FontWeight.bold },
+
+  paymentCard: {
+    backgroundColor: Colors.card, borderRadius: Radius.lg, borderWidth: 1,
+    borderColor: Colors.cardBorder, padding: Spacing.lg, marginBottom: Spacing.md,
+  },
+  paymentRow: { flexDirection: 'row', alignItems: 'center' },
+  paymentItem: { flex: 1, alignItems: 'center' },
+  paymentDivider: { width: 1, height: 40, backgroundColor: Colors.cardBorder },
+  paymentLabel: { fontSize: FontSize.xs, color: Colors.textMuted, fontWeight: FontWeight.bold, marginBottom: 4 },
+  paymentValue: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.textPrimary },
 
   catCard: {
     backgroundColor: Colors.card, borderRadius: Radius.lg, borderWidth: 1,

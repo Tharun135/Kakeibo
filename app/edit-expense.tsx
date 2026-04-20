@@ -15,6 +15,8 @@ export default function EditExpenseScreen() {
   const [category, setCategory] = useState<Category>('Needs');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Credit Card'>('Cash');
+  const [isSettled, setIsSettled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -27,6 +29,8 @@ export default function EditExpenseScreen() {
         setCategory(item.category as Category);
         setDescription(item.description);
         setDate(item.date);
+        setPaymentMethod(item.paymentMethod || 'Cash');
+        setIsSettled(item.isSettled ?? (item.paymentMethod === 'Cash'));
       } else {
         Alert.alert('Error', 'Expense not found');
         router.back();
@@ -54,6 +58,8 @@ export default function EditExpenseScreen() {
         category,
         description: description.trim(),
         date,
+        paymentMethod,
+        isSettled: paymentMethod === 'Cash' ? true : isSettled,
       });
       Alert.alert('✓ Updated', 'Expense updated successfully.', [
         { text: 'OK', onPress: () => router.back() }
@@ -117,6 +123,47 @@ export default function EditExpenseScreen() {
             />
           </View>
         </View>
+
+        {/* Payment Method */}
+        <View style={styles.fieldGroup}>
+          <Text style={styles.fieldLabel}>PAYMENT METHOD</Text>
+          <View style={styles.toggleRow}>
+            {(['Cash', 'Credit Card'] as const).map((method) => {
+              const selected = paymentMethod === method;
+              return (
+                <TouchableOpacity
+                  key={method}
+                  style={[styles.toggleBtn, selected && styles.toggleBtnActive]}
+                  onPress={() => setPaymentMethod(method)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.toggleText, selected && styles.toggleTextActive]}>
+                    {method === 'Cash' ? '💵 Cash' : '💳 Credit Card'}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Settlement Status (Credit Card Only) */}
+        {paymentMethod === 'Credit Card' && (
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>SETTLEMENT STATUS</Text>
+            <TouchableOpacity
+              style={[styles.settleBtn, isSettled && styles.settleBtnActive]}
+              onPress={() => setIsSettled(!isSettled)}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.settleBtnText, isSettled && styles.settleBtnTextActive]}>
+                {isSettled ? '✅ Transferred to Card' : '⏳ Pending Transfer from Bank'}
+              </Text>
+            </TouchableOpacity>
+            <Text style={styles.settleHint}>
+              Mark this true once you have moved the money from your bank to your CC bill.
+            </Text>
+          </View>
+        )}
 
         {/* Category */}
         <View style={styles.fieldGroup}>
@@ -215,6 +262,26 @@ const styles = StyleSheet.create({
   },
   currencySign: { fontSize: FontSize.xxl, fontWeight: FontWeight.bold, color: Colors.accent, marginRight: Spacing.sm },
   amountInput: { flex: 1, fontSize: FontSize.xxxl, fontWeight: FontWeight.bold, color: Colors.textPrimary, paddingVertical: Spacing.md },
+  
+  toggleRow: { flexDirection: 'row', gap: Spacing.sm },
+  toggleBtn: {
+    flex: 1, backgroundColor: Colors.card, borderRadius: Radius.md,
+    borderWidth: 1.5, borderColor: Colors.cardBorder, padding: Spacing.md,
+    alignItems: 'center',
+  },
+  toggleBtnActive: { borderColor: Colors.accent, backgroundColor: Colors.accent + '15' },
+  toggleText: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.textSecondary },
+  toggleTextActive: { color: Colors.accent },
+
+  settleBtn: {
+    backgroundColor: Colors.card, borderRadius: Radius.md, borderWidth: 1.5,
+    borderColor: Colors.cardBorder, padding: Spacing.md, alignItems: 'center',
+  },
+  settleBtnActive: { borderColor: Colors.success, backgroundColor: Colors.success + '15' },
+  settleBtnText: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.textSecondary },
+  settleBtnTextActive: { color: Colors.success },
+  settleHint: { fontSize: FontSize.xs, color: Colors.textMuted, marginTop: Spacing.xs, textAlign: 'center' },
+
   categoryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
   catCard: {
     width: '47%', backgroundColor: Colors.card, borderRadius: Radius.md,

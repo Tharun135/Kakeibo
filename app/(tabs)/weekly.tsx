@@ -3,17 +3,19 @@ import {
   View, Text, ScrollView, StyleSheet, StatusBar,
   RefreshControl, KeyboardAvoidingView, Platform
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Colors, FontSize, FontWeight, Radius, Spacing, CATEGORIES } from '../../constants/theme';
 import {
   currentMonthKey, currentWeekKey, currentWeekRange,
   formatCurrency, computeCategoryTotals
 } from '../../utils/dateUtils';
-import { getAllExpenses, getReview, saveReview, type Expense, type Review } from '../../utils/db';
+import { getAllExpenses, getReview, saveReview, deleteExpense, type Expense, type Review } from '../../utils/db';
 import CategoryBar from '../../components/CategoryBar';
 import ReflectionBox from '../../components/ReflectionBox';
+import ExpenseCard from '../../components/ExpenseCard';
 
 export default function WeeklyReviewScreen() {
+  const router = useRouter();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [notes, setNotes] = useState('');
   const [refreshing, setRefreshing] = useState(false);
@@ -112,6 +114,24 @@ export default function WeeklyReviewScreen() {
           onChangeText={saveNotes}
           minHeight={130}
         />
+
+        {/* Weekly Expenses List */}
+        {expenses.length > 0 && (
+          <View style={{ marginTop: Spacing.xl }}>
+            <Text style={styles.cardTitle}>Items This Week</Text>
+            {expenses.sort((a,b) => b.date.localeCompare(a.date)).map((e) => (
+              <ExpenseCard 
+                key={e.id} 
+                expense={e} 
+                onDelete={async (id) => {
+                  await deleteExpense(id);
+                  await load();
+                }} 
+                onPress={(id) => router.push({ pathname: '/edit-expense', params: { id } })}
+              />
+            ))}
+          </View>
+        )}
 
         {/* No expenses state */}
         {expenses.length === 0 && (
