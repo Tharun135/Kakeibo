@@ -368,6 +368,8 @@ export default function SettingsScreen() {
                       } else {
                         Alert.alert('✓ Reminders Scheduled', 'Your reviews are set.');
                       }
+                    } else {
+                      Alert.alert('Scheduling Error', 'The app could not register the alerts. Please check if notifications are allowed for this app in your Android settings.');
                     }
                   } else {
                     Alert.alert('Permission Denied', 'Please enable notifications in your device settings.');
