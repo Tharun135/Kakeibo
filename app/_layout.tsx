@@ -5,6 +5,7 @@ import { StatusBar } from 'react-native';
 
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { View } from 'react-native';
+import BiometricAuthWrapper from '../components/BiometricAuthWrapper';
 
 export {
   ErrorBoundary,
@@ -23,13 +24,15 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <View style={{ flex: 1, backgroundColor: '#0D0D0D' }}>
-        <StatusBar barStyle="light-content" backgroundColor="#0D0D0D" />
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="+not-found" />
-        </Stack>
-      </View>
+      <BiometricAuthWrapper>
+        <View style={{ flex: 1, backgroundColor: '#0D0D0D' }}>
+          <StatusBar barStyle="light-content" backgroundColor="#0D0D0D" />
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="+not-found" />
+          </Stack>
+        </View>
+      </BiometricAuthWrapper>
     </SafeAreaProvider>
   );
 }

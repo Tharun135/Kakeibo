@@ -10,7 +10,8 @@ import {
 } from '../../utils/dateUtils';
 import { getIncomeForMonth, saveIncome, getConfig, saveConfig } from '../../utils/db';
 import { requestNotificationPermissions, scheduleKakeiboReminders, cancelKakeiboReminders } from '../../utils/notificationUtils';
-import { Modal, FlatList } from 'react-native';
+import { Modal, FlatList, Switch } from 'react-native';
+import * as LocalAuthentication from 'expo-local-authentication';
 
 const DAYS = [
   { label: 'SUN', value: 1 },
@@ -40,6 +41,8 @@ export default function SettingsScreen() {
   const [dateModal, setDateModal] = useState(false);
 
   const [remindersEnabled, setRemindersEnabled] = useState(false);
+  const [biometricEnabled, setBiometricEnabled] = useState(false);
+  const [isBiometricHardwareAvailable, setIsBiometricHardwareAvailable] = useState(false);
   const [saving, setSaving] = useState(false);
   const [monthKey, setMonthKey] = useState('');
   const [monthLabel, setMonthLabel] = useState('');
@@ -87,6 +90,11 @@ export default function SettingsScreen() {
     setMonthlyMinute(String(config.monthlyReminderMinute));
     setMonthlyDate(String(config.monthlyDate));
     setRemindersEnabled(config.remindersEnabled);
+    setBiometricEnabled(config.biometricEnabled);
+
+    const hasHardware = await LocalAuthentication.hasHardwareAsync();
+    const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+    setIsBiometricHardwareAvailable(hasHardware && isEnrolled);
   }, []);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
@@ -381,8 +389,40 @@ export default function SettingsScreen() {
                 {remindersEnabled ? 'Disable' : 'Enable'}
               </Text>
             </TouchableOpacity>
-          </View>
         </View>
+
+        {/* Security / Biometrics */}
+        {isBiometricHardwareAvailable && (
+          <View style={{ marginTop: Spacing.xl }}>
+            <Text style={styles.fieldLabel}>SECURITY</Text>
+            <View style={styles.remindersCard}>
+              <View style={styles.remindersInfo}>
+                <Text style={styles.remindersTitle}>Biometric Lock</Text>
+                <Text style={styles.remindersSub}>Require fingerprint or face ID to open the app.</Text>
+              </View>
+              <Switch
+                value={biometricEnabled}
+                onValueChange={async (value) => {
+                  if (value) {
+                    // Try to authenticate before enabling
+                    const result = await LocalAuthentication.authenticateAsync({
+                      promptMessage: 'Confirm Biometrics',
+                    });
+                    if (result.success) {
+                      await saveConfig({ biometricEnabled: true });
+                      setBiometricEnabled(true);
+                    }
+                  } else {
+                    await saveConfig({ biometricEnabled: false });
+                    setBiometricEnabled(false);
+                  }
+                }}
+                trackColor={{ false: '#333', true: Colors.accent }}
+                thumbColor={biometricEnabled ? '#FFF' : '#AAA'}
+              />
+            </View>
+          </View>
+        )}
 
         <View style={{ height: Spacing.xxl }} />
       </ScrollView>

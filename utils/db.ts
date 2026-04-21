@@ -15,6 +15,7 @@ export interface AppConfig {
   monthlyReminderMinute: number; // 0-59
   monthlyDate: number; // 1-31
   remindersEnabled: boolean;
+  biometricEnabled: boolean;
 }
 
 const DEFAULT_CONFIG: AppConfig = {
@@ -25,6 +26,7 @@ const DEFAULT_CONFIG: AppConfig = {
   monthlyReminderMinute: 0,
   monthlyDate: 1, // 1st
   remindersEnabled: false,
+  biometricEnabled: false,
 };
 
 export async function getConfig(): Promise<AppConfig> {

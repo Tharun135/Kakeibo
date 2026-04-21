@@ -11,8 +11,18 @@ Notifications.setNotificationHandler({
   }),
 });
 
+// Setup Android channel
+if (Platform.OS === 'android') {
+  Notifications.setNotificationChannelAsync('default', {
+    name: 'default',
+    importance: Notifications.AndroidImportance.MAX,
+    vibrationPattern: [0, 250, 250, 250],
+    lightColor: '#D4A853',
+  });
+}
+
 export async function requestNotificationPermissions() {
-  if (!Device.isDevice) return false;
+  if (Platform.OS === 'web') return true;
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
   let finalStatus = existingStatus;
   if (existingStatus !== 'granted') {
@@ -36,7 +46,6 @@ export async function scheduleKakeiboReminders(
     return false;
   }
 
-  if (!Device.isDevice) return false;
 
   try {
     // 1. Cancel existing
@@ -50,6 +59,8 @@ export async function scheduleKakeiboReminders(
         title: "📓 Weekly Reflection Time",
         body: "The week is ending. Take 5 minutes to review your spending and reset for next week.",
         data: { screen: 'weekly' },
+        priority: 'high',
+        channelId: 'default',
       },
       trigger: {
         weekday: weeklyDay,
@@ -65,6 +76,8 @@ export async function scheduleKakeiboReminders(
         title: "💰 Monthly Review",
         body: "A new month has begun! Reflect on your savings goals and answer the Kakeibo questions.",
         data: { screen: 'monthly' },
+        priority: 'high',
+        channelId: 'default',
       },
       trigger: {
         day: monthlyDate,
