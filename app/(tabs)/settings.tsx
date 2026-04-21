@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, TextInput, ScrollView, StyleSheet,
-  TouchableOpacity, StatusBar, Alert, KeyboardAvoidingView, Platform
+  TouchableOpacity, StatusBar, Alert, KeyboardAvoidingView, Platform, Linking
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '../../constants/theme';
@@ -359,8 +359,8 @@ export default function SettingsScreen() {
 
                   const granted = await requestNotificationPermissions();
                   if (granted || Platform.OS === 'web') {
-                    const success = await scheduleKakeiboReminders(wh, wm, wd, mh, mm, md);
-                    if (success || Platform.OS === 'web') {
+                    const result = await scheduleKakeiboReminders(wh, wm, wd, mh, mm, md);
+                    if (result.success || Platform.OS === 'web') {
                       await saveConfig({ 
                         weeklyReminderHour: wh, 
                         weeklyReminderMinute: wm, 
@@ -380,10 +380,35 @@ export default function SettingsScreen() {
                       const msg = Platform.OS === 'android' 
                         ? 'The app could not register the alerts. Please check if "Notifications" and "Alarms & Reminders" are allowed for KAKEIBO in your Android settings.'
                         : 'The app could not register the alerts. Please check your notification settings.';
-                      Alert.alert('Scheduling Error', msg);
+                      
+                      Alert.alert(
+                        'Scheduling Error',
+                        result.details || msg,
+                        [
+                          { text: 'OK', style: 'default' },
+                          { 
+                            text: 'Open Settings', 
+                            onPress: () => {
+                              if (Platform.OS === 'ios') {
+                                Linking.openSettings();
+                              } else if (Platform.OS === 'android') {
+                                // openSettings() opens the app-specific settings page
+                                Linking.openSettings();
+                              }
+                            }
+                          }
+                        ]
+                      );
                     }
                   } else {
-                    Alert.alert('Permission Denied', 'Please enable notifications in your device settings.');
+                    Alert.alert(
+                      'Permission Denied', 
+                      'Please enable notifications in your device settings.',
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        { text: 'Open Settings', onPress: () => Linking.openSettings() }
+                      ]
+                    );
                   }
                 }
               }}

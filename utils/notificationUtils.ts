@@ -42,8 +42,7 @@ export async function scheduleKakeiboReminders(
 ) {
   // Notifications are currently only supported on native mobile devices for this app
   if (Platform.OS === 'web') {
-    console.warn("Local notification scheduling is not supported on web.");
-    return false;
+    return { success: false, error: "Web not supported" };
   }
 
   try {
@@ -61,46 +60,65 @@ export async function scheduleKakeiboReminders(
     await Notifications.cancelAllScheduledNotificationsAsync();
 
     // 2. Weekly Reminder
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: "📓 Weekly Reflection Time",
-        body: "The week is ending. Take 5 minutes to review your spending and reset for next week.",
-        data: { screen: 'weekly' },
-        priority: 'high',
-        channelId: 'default',
-      },
-      trigger: {
-        weekday: weeklyDay,
-        hour: weeklyHour,
-        minute: weeklyMinute,
-        repeats: true,
-      } as Notifications.NotificationTriggerInput,
-    });
+    try {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "📓 Weekly Reflection Time",
+          body: "The week is ending. Take 5 minutes to review your spending and reset for next week.",
+          data: { screen: 'weekly' },
+          priority: 'high',
+          channelId: 'default',
+        },
+        trigger: {
+          weekday: weeklyDay,
+          hour: weeklyHour,
+          minute: weeklyMinute,
+          repeats: true,
+        } as Notifications.NotificationTriggerInput,
+      });
+    } catch (e: any) {
+      console.error("Failed to schedule weekly reminder:", e);
+      throw e;
+    }
 
     // 3. Monthly Reminder
-    // Use a slightly more robust trigger if possible, but 'day' is standard for monthly
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: "💰 Monthly Review",
-        body: "A new month has begun! Reflect on your savings goals and answer the Kakeibo questions.",
-        data: { screen: 'monthly' },
-        priority: 'high',
-        channelId: 'default',
-      },
-      trigger: {
-        day: monthlyDate,
-        hour: monthlyHour,
-        minute: monthlyMinute,
-        repeats: true,
-      } as Notifications.NotificationTriggerInput,
-    });
+    try {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "💰 Monthly Review",
+          body: "A new month has begun! Reflect on your savings goals and answer the Kakeibo questions.",
+          data: { screen: 'monthly' },
+          priority: 'high',
+          channelId: 'default',
+        },
+        trigger: {
+          day: monthlyDate,
+          hour: monthlyHour,
+          minute: monthlyMinute,
+          repeats: true,
+        } as Notifications.NotificationTriggerInput,
+      });
+    } catch (e: any) {
+      console.error("Failed to schedule monthly reminder:", e);
+      throw e;
+    }
 
     console.log(`Kakeibo reminders scheduled: Weekly Day ${weeklyDay} at ${weeklyHour}:${String(weeklyMinute).padStart(2, '0')}, Monthly Date ${monthlyDate} at ${monthlyHour}:${String(monthlyMinute).padStart(2, '0')}`);
-    return true;
-  } catch (error) {
+    return { success: true };
+  } catch (error: any) {
     console.error("Error scheduling notifications:", error);
-    // If it's a permission issue on Android 12+, it might be caught here
-    return false;
+    let errorMsg = error?.message || String(error);
+    
+    // Check for specific Android alarm permissions error
+    if (errorMsg.includes("SCHEDULE_EXACT_ALARM") || errorMsg.includes("exact alarm")) {
+      return { 
+        success: false, 
+        error: "Exact Alarm Permission Denied",
+        details: "The app requires 'Alarms & Reminders' permission to schedule your reviews at exact times. Please enable it in Android settings."
+      };
+    }
+    
+    return { success: false, error: errorMsg };
   }
 }
 
