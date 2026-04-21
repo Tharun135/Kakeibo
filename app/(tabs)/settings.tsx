@@ -382,20 +382,13 @@ export default function SettingsScreen() {
                         : 'The app could not register the alerts. Please check your notification settings.';
                       
                       Alert.alert(
-                        'Scheduling Error',
+                        result.error || 'Scheduling Error',
                         result.details || msg,
                         [
                           { text: 'OK', style: 'default' },
                           { 
                             text: 'Open Settings', 
-                            onPress: () => {
-                              if (Platform.OS === 'ios') {
-                                Linking.openSettings();
-                              } else if (Platform.OS === 'android') {
-                                // openSettings() opens the app-specific settings page
-                                Linking.openSettings();
-                              }
-                            }
+                            onPress: () => Linking.openSettings()
                           }
                         ]
                       );

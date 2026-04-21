@@ -40,13 +40,11 @@ export async function scheduleKakeiboReminders(
   monthlyMinute = 0,
   monthlyDate = 1
 ) {
-  // Notifications are currently only supported on native mobile devices for this app
   if (Platform.OS === 'web') {
     return { success: false, error: "Web not supported" };
   }
 
   try {
-    // 0. Ensure channel exists (especially for Android)
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('default', {
         name: 'default',
@@ -56,7 +54,6 @@ export async function scheduleKakeiboReminders(
       });
     }
 
-    // 1. Cancel existing
     await Notifications.cancelAllScheduledNotificationsAsync();
 
     // 2. Weekly Reminder
@@ -77,8 +74,12 @@ export async function scheduleKakeiboReminders(
         } as Notifications.NotificationTriggerInput,
       });
     } catch (e: any) {
-      console.error("Failed to schedule weekly reminder:", e);
-      throw e;
+      console.error("Weekly reminder failed:", e);
+      return { 
+        success: false, 
+        error: "Weekly Schedule Failed", 
+        details: e.message || "Unknown error during weekly scheduling." 
+      };
     }
 
     // 3. Monthly Reminder
@@ -99,26 +100,29 @@ export async function scheduleKakeiboReminders(
         } as Notifications.NotificationTriggerInput,
       });
     } catch (e: any) {
-      console.error("Failed to schedule monthly reminder:", e);
-      throw e;
+      console.error("Monthly reminder failed:", e);
+      return { 
+        success: false, 
+        error: "Monthly Schedule Failed", 
+        details: e.message || "Unknown error during monthly scheduling." 
+      };
     }
 
-    console.log(`Kakeibo reminders scheduled: Weekly Day ${weeklyDay} at ${weeklyHour}:${String(weeklyMinute).padStart(2, '0')}, Monthly Date ${monthlyDate} at ${monthlyHour}:${String(monthlyMinute).padStart(2, '0')}`);
+    console.log(`Kakeibo reminders scheduled successfully.`);
     return { success: true };
   } catch (error: any) {
-    console.error("Error scheduling notifications:", error);
+    console.error("General scheduling error:", error);
     let errorMsg = error?.message || String(error);
     
-    // Check for specific Android alarm permissions error
     if (errorMsg.includes("SCHEDULE_EXACT_ALARM") || errorMsg.includes("exact alarm")) {
       return { 
         success: false, 
         error: "Exact Alarm Permission Denied",
-        details: "The app requires 'Alarms & Reminders' permission to schedule your reviews at exact times. Please enable it in Android settings."
+        details: "The app requires 'Alarms & Reminders' permission. Please enable it in Android settings."
       };
     }
     
-    return { success: false, error: errorMsg };
+    return { success: false, error: "Scheduling Error", details: errorMsg };
   }
 }
 
