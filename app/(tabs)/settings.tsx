@@ -389,6 +389,7 @@ export default function SettingsScreen() {
                 {remindersEnabled ? 'Disable' : 'Enable'}
               </Text>
             </TouchableOpacity>
+          </View>
         </View>
 
         {/* Security / Biometrics */}
