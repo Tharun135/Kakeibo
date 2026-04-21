@@ -377,7 +377,10 @@ export default function SettingsScreen() {
                         Alert.alert('✓ Reminders Scheduled', 'Your reviews are set.');
                       }
                     } else {
-                      Alert.alert('Scheduling Error', 'The app could not register the alerts. Please check if notifications are allowed for this app in your Android settings.');
+                      const msg = Platform.OS === 'android' 
+                        ? 'The app could not register the alerts. Please check if "Notifications" and "Alarms & Reminders" are allowed for KAKEIBO in your Android settings.'
+                        : 'The app could not register the alerts. Please check your notification settings.';
+                      Alert.alert('Scheduling Error', msg);
                     }
                   } else {
                     Alert.alert('Permission Denied', 'Please enable notifications in your device settings.');

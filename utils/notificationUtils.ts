@@ -46,12 +46,19 @@ export async function scheduleKakeiboReminders(
     return false;
   }
 
-
   try {
-    // 1. Cancel existing
-    if (Notifications.cancelAllScheduledNotificationsAsync) {
-      await Notifications.cancelAllScheduledNotificationsAsync();
+    // 0. Ensure channel exists (especially for Android)
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'default',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#D4A853',
+      });
     }
+
+    // 1. Cancel existing
+    await Notifications.cancelAllScheduledNotificationsAsync();
 
     // 2. Weekly Reminder
     await Notifications.scheduleNotificationAsync({
@@ -67,10 +74,11 @@ export async function scheduleKakeiboReminders(
         hour: weeklyHour,
         minute: weeklyMinute,
         repeats: true,
-      } as any,
+      } as Notifications.NotificationTriggerInput,
     });
 
     // 3. Monthly Reminder
+    // Use a slightly more robust trigger if possible, but 'day' is standard for monthly
     await Notifications.scheduleNotificationAsync({
       content: {
         title: "💰 Monthly Review",
@@ -84,13 +92,14 @@ export async function scheduleKakeiboReminders(
         hour: monthlyHour,
         minute: monthlyMinute,
         repeats: true,
-      } as any,
+      } as Notifications.NotificationTriggerInput,
     });
 
     console.log(`Kakeibo reminders scheduled: Weekly Day ${weeklyDay} at ${weeklyHour}:${String(weeklyMinute).padStart(2, '0')}, Monthly Date ${monthlyDate} at ${monthlyHour}:${String(monthlyMinute).padStart(2, '0')}`);
     return true;
   } catch (error) {
     console.error("Error scheduling notifications:", error);
+    // If it's a permission issue on Android 12+, it might be caught here
     return false;
   }
 }

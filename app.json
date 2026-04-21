@@ -18,6 +18,10 @@
     },
     "android": {
       "package": "com.tharun135.kakeibo",
+      "permissions": [
+        "NOTIFICATIONS",
+        "SCHEDULE_EXACT_ALARM"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#1A1A1A"
