@@ -104,7 +104,7 @@ export default function WeeklyReviewScreen() {
           <View style={styles.debtAlert}>
             <View style={styles.debtHeader}>
               <Text style={styles.debtIcon}>🚨</Text>
-              <View>
+              <View style={{ flex: 1 }}>
                 <Text style={styles.debtTitle}>Unsettled Credit Debt</Text>
                 <Text style={styles.debtSub}>
                   You have {formatCurrency(totalUnsettled)} spent on Credit Card this week.
@@ -239,6 +239,5 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xs,
     color: Colors.textSecondary,
     lineHeight: 18,
-    width: '90%',
   },
 });
