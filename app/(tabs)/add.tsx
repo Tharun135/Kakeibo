@@ -7,6 +7,10 @@ import uuid from 'react-native-uuid';
 import { Colors, FontSize, FontWeight, Radius, Spacing, CATEGORIES, CategoryMeta, type Category } from '../../constants/theme';
 import { todayString } from '../../utils/dateUtils';
 import { addExpense } from '../../utils/db';
+import DateTimePicker from '@react-native-community/datetimepicker';
+
+import { Calendar } from 'react-native-calendars';
+import { Modal } from 'react-native';
 
 export default function AddExpenseScreen() {
   const [amount, setAmount] = useState('');
@@ -15,6 +19,7 @@ export default function AddExpenseScreen() {
   const [date, setDate] = useState(todayString());
   const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Credit Card'>('Cash');
   const [saving, setSaving] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const handleSave = async () => {
     const parsed = parseFloat(amount.replace(/,/g, ''));
@@ -141,16 +146,58 @@ export default function AddExpenseScreen() {
         {/* Date */}
         <View style={styles.fieldGroup}>
           <Text style={styles.fieldLabel}>DATE</Text>
-          <TextInput
-            style={styles.textInput}
-            value={date}
-            onChangeText={setDate}
-            placeholder="YYYY-MM-DD"
-            placeholderTextColor={Colors.textMuted}
-            keyboardType="numeric"
-            maxLength={10}
-          />
-          <Text style={styles.dateHint}>Format: YYYY-MM-DD (e.g., 2026-04-17)</Text>
+          <TouchableOpacity 
+            style={styles.textInput} 
+            onPress={() => setShowDatePicker(true)}
+            activeOpacity={0.7}
+          >
+            <Text style={{ color: Colors.textPrimary, fontSize: FontSize.md }}>{date}</Text>
+          </TouchableOpacity>
+          
+          <Modal visible={showDatePicker} transparent animationType="fade">
+            <TouchableOpacity 
+              style={styles.modalOverlay} 
+              activeOpacity={1} 
+              onPress={() => setShowDatePicker(false)}
+            >
+              <View style={styles.calendarContainer}>
+                <Calendar
+                  current={date}
+                  maxDate={todayString()}
+                  onDayPress={(day: any) => {
+                    setDate(day.dateString);
+                    setShowDatePicker(false);
+                  }}
+                  markedDates={{
+                    [date]: { selected: true, selectedColor: Colors.accent }
+                  }}
+                  theme={{
+                    backgroundColor: Colors.surface,
+                    calendarBackground: Colors.surface,
+                    textSectionTitleColor: Colors.textMuted,
+                    selectedDayBackgroundColor: Colors.accent,
+                    selectedDayTextColor: Colors.textOnAccent,
+                    todayTextColor: Colors.accent,
+                    dayTextColor: Colors.textPrimary,
+                    textDisabledColor: Colors.textMuted + '44',
+                    dotColor: Colors.accent,
+                    selectedDotColor: Colors.textOnAccent,
+                    arrowColor: Colors.accent,
+                    disabledArrowColor: Colors.textMuted + '44',
+                    monthTextColor: Colors.textPrimary,
+                    indicatorColor: Colors.accent,
+                    textDayFontWeight: '600',
+                    textMonthFontWeight: 'bold',
+                    textDayHeaderFontWeight: 'bold',
+                    textDayFontSize: 14,
+                    textMonthFontSize: 16,
+                    textDayHeaderFontSize: 12
+                  }}
+                />
+              </View>
+            </TouchableOpacity>
+          </Modal>
+          <Text style={styles.dateHint}>Tap to select the transaction date</Text>
         </View>
 
         {/* Save button */}
@@ -222,4 +269,14 @@ const styles = StyleSheet.create({
   },
   saveBtnDisabled: { opacity: 0.6 },
   saveBtnText: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.textOnAccent },
+  
+  modalOverlay: { 
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', 
+    justifyContent: 'center', alignItems: 'center', padding: Spacing.xl 
+  },
+  calendarContainer: { 
+    backgroundColor: Colors.surface, borderRadius: Radius.lg, 
+    width: '100%', maxWidth: 400, borderWidth: 1, 
+    borderColor: Colors.cardBorder, overflow: 'hidden' 
+  },
 });

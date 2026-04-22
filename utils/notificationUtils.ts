@@ -58,20 +58,12 @@ export async function scheduleKakeiboReminders(
 
     // 2. Weekly Reminder
     try {
-      const weeklyTrigger: any = Platform.OS === 'android' 
-        ? {
-            type: 'weekly',
-            weekday: weeklyDay,
-            hour: weeklyHour,
-            minute: weeklyMinute,
-          }
-        : {
-            type: 'calendar',
-            weekday: weeklyDay,
-            hour: weeklyHour,
-            minute: weeklyMinute,
-            repeats: true,
-          };
+      const weeklyTrigger: any = {
+        weekday: weeklyDay,
+        hour: weeklyHour,
+        minute: weeklyMinute,
+        repeats: true,
+      };
 
       await Notifications.scheduleNotificationAsync({
         content: {
@@ -94,20 +86,12 @@ export async function scheduleKakeiboReminders(
 
     // 3. Monthly Reminder
     try {
-      const monthlyTrigger: any = Platform.OS === 'android'
-        ? {
-            type: 'monthly',
-            day: monthlyDate,
-            hour: monthlyHour,
-            minute: monthlyMinute,
-          }
-        : {
-            type: 'calendar',
-            day: monthlyDate,
-            hour: monthlyHour,
-            minute: monthlyMinute,
-            repeats: true,
-          };
+      const monthlyTrigger: any = {
+        day: monthlyDate,
+        hour: monthlyHour,
+        minute: monthlyMinute,
+        repeats: true,
+      };
 
       await Notifications.scheduleNotificationAsync({
         content: {

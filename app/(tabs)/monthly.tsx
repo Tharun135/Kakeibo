@@ -1,16 +1,24 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, StatusBar,
-  RefreshControl, KeyboardAvoidingView, Platform
+  RefreshControl, KeyboardAvoidingView, Platform,
+  Alert, Linking
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
-import { Colors, FontSize, FontWeight, Radius, Spacing, CATEGORIES, CategoryMeta } from '../../constants/theme';
-import {
+import { useFocusEffect, useRouter } from 'expo-router';
+import { 
+  Colors, FontSize, FontWeight, Radius, Spacing, 
+  CATEGORIES, CategoryMeta 
+} from '../../constants/theme';
+import { 
   currentMonthKey, currentMonthLabel,
   formatCurrency, computeSpendable, computeSpent, computeCategoryTotals
 } from '../../utils/dateUtils';
-import { getAllExpenses, getIncomeForMonth, getReview, saveReview, type Expense, type Review } from '../../utils/db';
+import { 
+  getAllExpenses, getIncomeForMonth, getReview, saveReview, 
+  deleteExpense, updateExpense, type Expense, type Review 
+} from '../../utils/db';
 import ReflectionBox from '../../components/ReflectionBox';
+import ExpenseCard from '../../components/ExpenseCard';
 
 const KAKEIBO_QUESTIONS = [
   { key: 'q1', prompt: '1. What was my income this month?', placeholder: 'Reflect on what you earned...' },
@@ -20,6 +28,7 @@ const KAKEIBO_QUESTIONS = [
 ];
 
 export default function MonthlyReviewScreen() {
+  const router = useRouter();
   const [income, setIncome] = useState(0);
   const [savingGoal, setSavingGoal] = useState(0);
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -45,6 +54,11 @@ export default function MonthlyReviewScreen() {
 
   const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
 
+  const handleSettle = async (id: string) => {
+    await updateExpense(id, { isSettled: true });
+    await load();
+  };
+
   const updateAnswer = async (key: string, text: string) => {
     const updated = { ...answers, [key]: text };
     setAnswers(updated);
@@ -65,6 +79,9 @@ export default function MonthlyReviewScreen() {
   const catTotals = computeCategoryTotals(monthExpenses);
   const cashTotal = monthExpenses.filter((e) => e.paymentMethod === 'Cash').reduce((s, e) => s + e.amount, 0);
   const creditTotal = monthExpenses.filter((e) => e.paymentMethod === 'Credit Card').reduce((s, e) => s + e.amount, 0);
+
+  const unsettledCC = monthExpenses.filter(e => e.paymentMethod === 'Credit Card' && !e.isSettled);
+  const totalUnsettled = unsettledCC.reduce((s, e) => s + e.amount, 0);
 
   return (
     <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -101,6 +118,22 @@ export default function MonthlyReviewScreen() {
             </View>
           </View>
         </View>
+
+        {/* Credit Card Alert */}
+        {totalUnsettled > 0 && (
+          <View style={styles.debtAlert}>
+            <View style={styles.debtHeader}>
+              <Text style={styles.debtIcon}>🚨</Text>
+              <View>
+                <Text style={styles.debtTitle}>Unsettled Monthly Debt</Text>
+                <Text style={styles.debtSub}>
+                  You have {formatCurrency(totalUnsettled)} unsettled on Credit Card this month.
+                  Transfer this to your bank now for precise Kakeibo tracking.
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
 
         {/* Payment Breakdown */}
         {monthExpenses.length > 0 && (
@@ -161,6 +194,25 @@ export default function MonthlyReviewScreen() {
           />
         ))}
 
+        {/* Expense List for Audit */}
+        {monthExpenses.length > 0 && (
+          <View style={{ marginTop: Spacing.xl }}>
+            <Text style={styles.catTitle}>Monthly Spending Details</Text>
+            {monthExpenses.sort((a,b) => b.date.localeCompare(a.date)).map((e) => (
+              <ExpenseCard 
+                key={e.id} 
+                expense={e} 
+                onDelete={async (id) => {
+                  await deleteExpense(id);
+                  await load();
+                }}
+                onSettle={handleSettle}
+                onPress={(id) => router.push({ pathname: '/edit-expense', params: { id } })}
+              />
+            ))}
+          </View>
+        )}
+
         <View style={{ height: Spacing.xxl }} />
       </ScrollView>
     </KeyboardAvoidingView>
@@ -212,4 +264,33 @@ const styles = StyleSheet.create({
   questionsIcon: { fontSize: 36 },
   questionsTitle: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.textPrimary },
   questionsSubtitle: { fontSize: FontSize.sm, color: Colors.textSecondary, marginTop: 2 },
+
+  debtAlert: {
+    backgroundColor: Colors.danger + '12',
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Colors.danger + '33',
+    padding: Spacing.lg,
+    marginBottom: Spacing.md,
+  },
+  debtHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  debtIcon: {
+    fontSize: 28,
+  },
+  debtTitle: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.bold,
+    color: Colors.danger,
+    marginBottom: 2,
+  },
+  debtSub: {
+    fontSize: FontSize.xs,
+    color: Colors.textSecondary,
+    lineHeight: 18,
+    width: '90%',
+  },
 });

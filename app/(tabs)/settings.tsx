@@ -1,8 +1,10 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
   View, Text, TextInput, ScrollView, StyleSheet,
-  TouchableOpacity, StatusBar, Alert, KeyboardAvoidingView, Platform, Linking
+  TouchableOpacity, StatusBar, Alert, KeyboardAvoidingView, Platform, Linking,
+  Animated, Pressable, Modal, FlatList, Switch
 } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '../../constants/theme';
 import {
@@ -10,7 +12,6 @@ import {
 } from '../../utils/dateUtils';
 import { getIncomeForMonth, saveIncome, getConfig, saveConfig } from '../../utils/db';
 import { requestNotificationPermissions, scheduleKakeiboReminders, cancelKakeiboReminders } from '../../utils/notificationUtils';
-import { Modal, FlatList, Switch } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 
 const DAYS = [
@@ -24,8 +25,39 @@ const DAYS = [
 ];
 
 const DATES = Array.from({ length: 31 }, (_, i) => i + 1);
+const HOURS = Array.from({ length: 24 }, (_, i) => ({ label: i.toString().padStart(2, '0'), value: i }));
+const MINUTES = Array.from({ length: 12 }, (_, i) => ({ label: (i * 5).toString().padStart(2, '0'), value: i * 5 }));
+
+import AnalogClockPicker from '../../components/AnalogClockPicker';
 
 export default function SettingsScreen() {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const flipAnim = useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scaleAnim, { toValue: 1.08, duration: 2000, useNativeDriver: true }),
+        Animated.timing(scaleAnim, { toValue: 1, duration: 2000, useNativeDriver: true }),
+      ])
+    ).start();
+  }, [scaleAnim]);
+
+  const triggerFlip = () => {
+    flipAnim.setValue(0);
+    Animated.spring(flipAnim, {
+      toValue: 1,
+      friction: 8,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const rotateY = flipAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
   const [incomeStr, setIncomeStr] = useState('');
   const [goalStr, setGoalStr] = useState('');
   
@@ -39,6 +71,7 @@ export default function SettingsScreen() {
 
   const [dayModal, setDayModal] = useState(false);
   const [dateModal, setDateModal] = useState(false);
+  const [showingTimePicker, setShowingTimePicker] = useState<'weekly' | 'monthly' | null>(null);
 
   const [remindersEnabled, setRemindersEnabled] = useState(false);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
@@ -57,11 +90,11 @@ export default function SettingsScreen() {
             keyExtractor={(item) => String(item.value || item)}
             renderItem={({ item }) => {
               const label = item.label || String(item);
-              const val = item.value || item;
+              const val = item && typeof item === 'object' && 'value' in item ? item.value : item;
               return (
                 <TouchableOpacity 
-                  style={styles.modalItem} 
-                  onPress={() => { onSelect(val); onClose(); }}
+                   style={styles.modalItem} 
+                   onPress={() => { onSelect(val); onClose(); }}
                 >
                   <Text style={styles.modalItemText}>{label}</Text>
                 </TouchableOpacity>
@@ -72,6 +105,17 @@ export default function SettingsScreen() {
       </TouchableOpacity>
     </Modal>
   );
+
+  const onTimeSelect = (h: number, m: number) => {
+    if (showingTimePicker === 'weekly') {
+      setWeeklyHour(String(h));
+      setWeeklyMinute(String(m));
+    } else if (showingTimePicker === 'monthly') {
+      setMonthlyHour(String(h));
+      setMonthlyMinute(String(m));
+    }
+    setShowingTimePicker(null);
+  };
 
   const load = useCallback(async () => {
     const mk = currentMonthKey();
@@ -144,6 +188,11 @@ export default function SettingsScreen() {
           monthlyDate: md,
           remindersEnabled,
         });
+
+        // Reschedule if enabled so changes take effect
+        if (remindersEnabled) {
+          await scheduleKakeiboReminders(wh, wm, wd, mh, mm, md);
+        }
       }
 
       Alert.alert('✓ Saved', `Budget set for ${monthLabel}.\nSpendable: ${formatCurrency(spendable)}`);
@@ -163,7 +212,14 @@ export default function SettingsScreen() {
 
         {/* KAKEIBO guide */}
         <View style={styles.guideCard}>
-          <Text style={styles.guideIcon}>📒</Text>
+          <Pressable 
+            onPress={triggerFlip}
+            onHoverIn={Platform.OS === 'web' ? triggerFlip : undefined}
+          >
+            <Animated.View style={{ transform: [{ scale: scaleAnim }, { rotateY }] }}>
+              <MaterialCommunityIcons name="book-open-page-variant-outline" size={48} color={Colors.accent} />
+            </Animated.View>
+          </Pressable>
           <View style={styles.guideText}>
             <Text style={styles.guideTitle}>KAKEIBO Method</Text>
             <Text style={styles.guideSub}>
@@ -266,23 +322,14 @@ export default function SettingsScreen() {
                     <Text style={styles.pickerArrow}>▼</Text>
                   </TouchableOpacity>
 
-                  <View style={[styles.timeInputBox, { marginTop: 4 }]}>
-                    <TextInput 
-                      style={styles.timeInput}
-                      value={weeklyHour}
-                      onChangeText={setWeeklyHour}
-                      keyboardType="numeric"
-                      maxLength={2}
-                    />
+                  <TouchableOpacity 
+                    style={[styles.timeInputBox, { marginTop: 4 }]}
+                    onPress={() => setShowingTimePicker('weekly')}
+                  >
+                    <Text style={styles.timeInput}>{weeklyHour.padStart(2, '0')}</Text>
                     <Text style={styles.timeSeparator}>:</Text>
-                    <TextInput 
-                      style={[styles.timeInput, { textAlign: 'left' }]}
-                      value={weeklyMinute}
-                      onChangeText={setWeeklyMinute}
-                      keyboardType="numeric"
-                      maxLength={2}
-                    />
-                  </View>
+                    <Text style={styles.timeInput}>{weeklyMinute.padStart(2, '0')}</Text>
+                  </TouchableOpacity>
                 </View>
 
                 <View style={styles.timeCol}>
@@ -295,23 +342,14 @@ export default function SettingsScreen() {
                     <Text style={styles.pickerArrow}>▼</Text>
                   </TouchableOpacity>
 
-                  <View style={[styles.timeInputBox, { marginTop: 4 }]}>
-                    <TextInput 
-                      style={styles.timeInput}
-                      value={monthlyHour}
-                      onChangeText={setMonthlyHour}
-                      keyboardType="numeric"
-                      maxLength={2}
-                    />
+                  <TouchableOpacity 
+                    style={[styles.timeInputBox, { marginTop: 4 }]}
+                    onPress={() => setShowingTimePicker('monthly')}
+                  >
+                    <Text style={styles.timeInput}>{monthlyHour.padStart(2, '0')}</Text>
                     <Text style={styles.timeSeparator}>:</Text>
-                    <TextInput 
-                      style={[styles.timeInput, { textAlign: 'left' }]}
-                      value={monthlyMinute}
-                      onChangeText={setMonthlyMinute}
-                      keyboardType="numeric"
-                      maxLength={2}
-                    />
-                  </View>
+                    <Text style={styles.timeInput}>{monthlyMinute.padStart(2, '0')}</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
 
@@ -328,6 +366,14 @@ export default function SettingsScreen() {
                 title="Select Monthly Date"
                 onSelect={(v: any) => setMonthlyDate(String(v))}
                 onClose={() => setDateModal(false)}
+              />
+
+              <AnalogClockPicker
+                visible={showingTimePicker !== null}
+                initialHours={parseInt((showingTimePicker === 'weekly' ? weeklyHour : monthlyHour) || '0')}
+                initialMinutes={parseInt((showingTimePicker === 'weekly' ? weeklyMinute : monthlyMinute) || '0')}
+                onClose={() => setShowingTimePicker(null)}
+                onSelect={onTimeSelect}
               />
             </View>
             

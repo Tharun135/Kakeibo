@@ -1,8 +1,9 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
-  StatusBar, RefreshControl
+  StatusBar, RefreshControl, Animated, Platform
 } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Colors, FontSize, FontWeight, Radius, Spacing, CATEGORIES, CategoryMeta } from '../../constants/theme';
 import {
@@ -61,6 +62,33 @@ export default function DashboardScreen() {
     .filter((e) => e.date.startsWith(monthKey))
     .sort((a, b) => b.date.localeCompare(a.date) || b.amount - a.amount);
 
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const flipAnim = useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scaleAnim, { toValue: 1.08, duration: 2000, useNativeDriver: true }),
+        Animated.timing(scaleAnim, { toValue: 1, duration: 2000, useNativeDriver: true }),
+      ])
+    ).start();
+  }, [scaleAnim]);
+
+  const triggerFlip = () => {
+    flipAnim.setValue(0);
+    Animated.spring(flipAnim, {
+      toValue: 1,
+      friction: 8,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const rotateY = flipAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
   return (
     <View style={styles.root}>
       <StatusBar barStyle="light-content" backgroundColor={Colors.bg} />
@@ -76,9 +104,16 @@ export default function DashboardScreen() {
             <Text style={styles.greeting}>KAKEIBO</Text>
             <Text style={styles.month}>{monthLabel}</Text>
           </View>
-          <View style={styles.monthBadge}>
-            <Text style={styles.monthBadgeText}>📒</Text>
-          </View>
+          <TouchableOpacity 
+            style={styles.monthBadge}
+            onPress={() => { triggerFlip(); router.push('/about'); }}
+            onMouseEnter={Platform.OS === 'web' ? triggerFlip : undefined}
+            activeOpacity={0.7}
+          >
+            <Animated.View style={{ transform: [{ scale: scaleAnim }, { rotateY }] }}>
+              <MaterialCommunityIcons name="book-open-page-variant-outline" size={28} color={Colors.accent} />
+            </Animated.View>
+          </TouchableOpacity>
         </View>
 
         {/* Review reminders */}
@@ -106,11 +141,15 @@ export default function DashboardScreen() {
 
         {/* Income not set banner */}
         {incomeNotSet && (
-          <View style={styles.alertBanner}>
+          <TouchableOpacity 
+            style={styles.alertBanner} 
+            onPress={() => router.push('/settings')}
+            activeOpacity={0.7}
+          >
             <Text style={styles.alertText}>
               ⚙️ Set your monthly income in Settings to get started
             </Text>
-          </View>
+          </TouchableOpacity>
         )}
 
         {/* Budget summary cards */}

@@ -9,7 +9,10 @@ import {
   currentMonthKey, currentWeekKey, currentWeekRange,
   formatCurrency, computeCategoryTotals
 } from '../../utils/dateUtils';
-import { getAllExpenses, getReview, saveReview, deleteExpense, type Expense, type Review } from '../../utils/db';
+import { 
+  getAllExpenses, getReview, saveReview, deleteExpense, 
+  updateExpense, type Expense, type Review 
+} from '../../utils/db';
 import CategoryBar from '../../components/CategoryBar';
 import ReflectionBox from '../../components/ReflectionBox';
 import ExpenseCard from '../../components/ExpenseCard';
@@ -38,6 +41,11 @@ export default function WeeklyReviewScreen() {
 
   const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
 
+  const handleSettle = async (id: string) => {
+    await updateExpense(id, { isSettled: true });
+    await load();
+  };
+
   const saveNotes = async (text: string) => {
     setNotes(text);
     const monthKey = currentMonthKey();
@@ -53,6 +61,10 @@ export default function WeeklyReviewScreen() {
 
   const totals = computeCategoryTotals(expenses);
   const totalSpent = expenses.reduce((s, e) => s + e.amount, 0);
+  
+  const unsettledCC = expenses.filter(e => e.paymentMethod === 'Credit Card' && !e.isSettled);
+  const totalUnsettled = unsettledCC.reduce((s, e) => s + e.amount, 0);
+
   const biggestCat = CATEGORIES.reduce((a, b) => (totals[a] > totals[b] ? a : b));
 
   const formatDate = (d: string) => {
@@ -86,6 +98,22 @@ export default function WeeklyReviewScreen() {
             </Text>
           )}
         </View>
+
+        {/* Credit Card Alert */}
+        {totalUnsettled > 0 && (
+          <View style={styles.debtAlert}>
+            <View style={styles.debtHeader}>
+              <Text style={styles.debtIcon}>🚨</Text>
+              <View>
+                <Text style={styles.debtTitle}>Unsettled Credit Debt</Text>
+                <Text style={styles.debtSub}>
+                  You have {formatCurrency(totalUnsettled)} spent on Credit Card this week.
+                  Ensure this amount is transferred from your bank account to set aside.
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
 
         {/* Category bars */}
         <View style={styles.card}>
@@ -127,6 +155,7 @@ export default function WeeklyReviewScreen() {
                   await deleteExpense(id);
                   await load();
                 }} 
+                onSettle={handleSettle}
                 onPress={(id) => router.push({ pathname: '/edit-expense', params: { id } })}
               />
             ))}
@@ -183,4 +212,33 @@ const styles = StyleSheet.create({
   },
   emptyIcon: { fontSize: 36, marginBottom: Spacing.sm },
   emptyText: { fontSize: FontSize.md, color: Colors.textSecondary },
+  
+  debtAlert: {
+    backgroundColor: Colors.danger + '12',
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Colors.danger + '33',
+    padding: Spacing.lg,
+    marginBottom: Spacing.md,
+  },
+  debtHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  debtIcon: {
+    fontSize: 28,
+  },
+  debtTitle: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.bold,
+    color: Colors.danger,
+    marginBottom: 2,
+  },
+  debtSub: {
+    fontSize: FontSize.xs,
+    color: Colors.textSecondary,
+    lineHeight: 18,
+    width: '90%',
+  },
 });
