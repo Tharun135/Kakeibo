@@ -67,13 +67,11 @@ export async function scheduleKakeiboReminders(
           channelId: 'default',
         },
         trigger: {
-          type: 'calendar', // Explicitly set type
           weekday: weeklyDay,
           hour: weeklyHour,
           minute: weeklyMinute,
           repeats: true,
-          channelId: 'default', // Some Android versions require it here too
-        } as any,
+        },
       });
     } catch (e: any) {
       console.error("Weekly reminder failed:", e);
@@ -95,13 +93,11 @@ export async function scheduleKakeiboReminders(
           channelId: 'default',
         },
         trigger: {
-          type: 'calendar', // Explicitly set type
           day: monthlyDate,
           hour: monthlyHour,
           minute: monthlyMinute,
           repeats: true,
-          channelId: 'default', // Some Android versions require it here too
-        } as any,
+        },
       });
     } catch (e: any) {
       console.error("Monthly reminder failed:", e);
