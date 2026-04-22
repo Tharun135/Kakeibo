@@ -59,6 +59,7 @@ export async function scheduleKakeiboReminders(
     // 2. Weekly Reminder
     try {
       const weeklyTrigger: any = {
+        type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
         weekday: weeklyDay,
         hour: weeklyHour,
         minute: weeklyMinute,
@@ -87,6 +88,7 @@ export async function scheduleKakeiboReminders(
     // 3. Monthly Reminder
     try {
       const monthlyTrigger: any = {
+        type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
         day: monthlyDate,
         hour: monthlyHour,
         minute: monthlyMinute,

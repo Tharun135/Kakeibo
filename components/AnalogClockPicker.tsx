@@ -203,10 +203,10 @@ const styles = StyleSheet.create({
   numberText: { color: Colors.textSecondary, fontSize: 13, fontWeight: FontWeight.bold },
   activeNumberText: { color: '#000' },
 
-  hand: { position: 'absolute', width: 4, height: CENTER, left: CENTER - 2, top: 0, justifyContent: 'flex-start', alignItems: 'center' },
-  handLine: { width: 2, height: CENTER - 20, backgroundColor: Colors.accent, position: 'absolute', top: 20, borderRadius: 1 },
-  handKnob: { width: 34, height: 34, backgroundColor: Colors.accent, borderRadius: 17, position: 'absolute', top: -5, justifyContent: 'center', alignItems: 'center' },
-  centerDot: { width: 8, height: 8, backgroundColor: Colors.accent, borderRadius: 4, position: 'absolute' },
+  hand: { position: 'absolute', width: 4, height: CLOCK_SIZE, left: CENTER - 2, top: 0, justifyContent: 'flex-start', alignItems: 'center' },
+  handLine: { width: 2, height: CENTER - 35, backgroundColor: Colors.accent, position: 'absolute', top: 35, borderRadius: 1 },
+  handKnob: { width: 34, height: 34, backgroundColor: Colors.accent, borderRadius: 17, position: 'absolute', top: 18, justifyContent: 'center', alignItems: 'center' },
+  centerDot: { width: 10, height: 10, backgroundColor: Colors.accent, borderRadius: 5, position: 'absolute', left: CENTER - 5, top: CENTER - 5, zIndex: 10 },
 
   footer: { flexDirection: 'row', justifyContent: 'flex-end', width: '100%', gap: Spacing.md, marginTop: Spacing.lg },
   footerBtn: { paddingVertical: Spacing.sm, paddingHorizontal: Spacing.md },

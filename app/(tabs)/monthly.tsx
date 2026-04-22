@@ -124,7 +124,7 @@ export default function MonthlyReviewScreen() {
           <View style={styles.debtAlert}>
             <View style={styles.debtHeader}>
               <Text style={styles.debtIcon}>🚨</Text>
-              <View>
+              <View style={{ flex: 1 }}>
                 <Text style={styles.debtTitle}>Unsettled Monthly Debt</Text>
                 <Text style={styles.debtSub}>
                   You have {formatCurrency(totalUnsettled)} unsettled on Credit Card this month.
@@ -291,6 +291,5 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xs,
     color: Colors.textSecondary,
     lineHeight: 18,
-    width: '90%',
   },
 });
