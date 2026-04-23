@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
   pillarDesc: { fontSize: FontSize.xs, color: Colors.textMuted },
 
   benefitRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, marginBottom: Spacing.sm },
-  benefitText: { fontSize: FontSize.md, color: Colors.textSecondary },
+  benefitText: { flex: 1, fontSize: FontSize.md, color: Colors.textSecondary },
 
   footerNote: { 
     textAlign: 'center', 
