@@ -153,6 +153,7 @@ export default function AboutScreen() {
         </View>
 
         <Text style={styles.footerNote}>"Spending is the art of living intentionally."</Text>
+        <Text style={styles.developerNote}>Developed by Tharun Sebastian</Text>
         <View style={{ height: Spacing.xxl }} />
       </ScrollView>
     </View>
@@ -242,5 +243,12 @@ const styles = StyleSheet.create({
     fontStyle: 'italic', 
     color: Colors.textMuted,
     marginTop: Spacing.md
+  },
+  developerNote: {
+    textAlign: 'center',
+    fontSize: FontSize.xs,
+    color: Colors.textMuted,
+    marginTop: Spacing.xl,
+    opacity: 0.7,
   },
 });
