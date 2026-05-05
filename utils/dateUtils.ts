@@ -109,3 +109,15 @@ export function isMonthlyReviewDue(targetDate = 1): boolean {
   const date = d.getDate();
   return date === targetDate || date === (targetDate + 1) || date === (targetDate + 2); 
 }
+
+export function getPreviousMonth(monthKey: string): string {
+  const [year, month] = monthKey.split('-').map(Number);
+  const d = new Date(year, month - 2, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+export function getNextMonth(monthKey: string): string {
+  const [year, month] = monthKey.split('-').map(Number);
+  const d = new Date(year, month, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}

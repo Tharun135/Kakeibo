@@ -197,12 +197,6 @@ export default function DashboardScreen() {
           </View>
         </View>
 
-        {/* Saved tile */}
-        <View style={[styles.savedCard, { borderColor: Colors.success + '33' }]}>
-          <Text style={styles.savedLabel}>💰 Saved so far this month</Text>
-          <Text style={[styles.savedValue, { color: Colors.success }]}>{formatCurrency(saved)}</Text>
-          <Text style={styles.savedGoal}>Goal: {formatCurrency(savingGoal)}</Text>
-        </View>
 
         {/* Pending Card Payments Bucket */}
         {expenses.some(e => e.paymentMethod === 'Credit Card' && !e.isSettled) && (
@@ -304,13 +298,6 @@ const styles = StyleSheet.create({
   burnFooter: { flexDirection: 'row', justifyContent: 'space-between' },
   burnSub: { fontSize: FontSize.xs, color: Colors.textMuted, letterSpacing: 0.6 },
   burnVal: { fontSize: FontSize.lg, fontWeight: FontWeight.bold },
-  savedCard: {
-    backgroundColor: Colors.successMuted, borderRadius: Radius.lg, borderWidth: 1,
-    padding: Spacing.lg, marginBottom: Spacing.xl,
-  },
-  savedLabel: { fontSize: FontSize.sm, color: Colors.textSecondary, marginBottom: Spacing.xs },
-  savedValue: { fontSize: FontSize.xxl, fontWeight: FontWeight.heavy },
-  savedGoal: { fontSize: FontSize.xs, color: Colors.textMuted, marginTop: 4 },
 
   bucketCard: {
     backgroundColor: '#1E2530', borderRadius: Radius.lg, borderWidth: 1,

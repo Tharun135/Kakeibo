@@ -2,15 +2,16 @@ import React, { useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, StatusBar,
   RefreshControl, KeyboardAvoidingView, Platform,
-  Alert, Linking
+  Alert, Linking, TouchableOpacity
 } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { 
   Colors, FontSize, FontWeight, Radius, Spacing, 
   CATEGORIES, CategoryMeta 
 } from '../../constants/theme';
 import { 
-  currentMonthKey, currentMonthLabel,
+  currentMonthKey, currentMonthLabel, monthLabelFromKey, getPreviousMonth, getNextMonth,
   formatCurrency, computeSpendable, computeSpent, computeCategoryTotals
 } from '../../utils/dateUtils';
 import { 
@@ -38,9 +39,10 @@ export default function MonthlyReviewScreen() {
   const [monthLabel, setMonthLabel] = useState('');
 
   const load = useCallback(async () => {
-    const mk = currentMonthKey();
-    setMonthKey(mk);
-    setMonthLabel(currentMonthLabel());
+    const mk = monthKey || currentMonthKey();
+    if (!monthKey) setMonthKey(mk);
+    
+    setMonthLabel(monthLabelFromKey(mk));
     const rec = await getIncomeForMonth(mk);
     setIncome(rec?.income ?? 0);
     setSavingGoal(rec?.saving_goal ?? 0);
@@ -48,7 +50,7 @@ export default function MonthlyReviewScreen() {
     setExpenses(all);
     const review = await getReview(mk);
     setAnswers(review?.answers ?? {});
-  }, []);
+  }, [monthKey]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
@@ -92,9 +94,33 @@ export default function MonthlyReviewScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.accent} />}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <Text style={styles.title}>Monthly Review</Text>
-        <Text style={styles.subtitle}>{monthLabel}</Text>
+        {/* Header with Navigation */}
+        <View style={styles.headerRow}>
+          <View>
+            <Text style={styles.title}>Monthly Review</Text>
+            <Text style={styles.subtitle}>{monthLabel}</Text>
+          </View>
+          
+          <View style={styles.navButtons}>
+            <TouchableOpacity 
+              style={styles.navBtn} 
+              onPress={() => setMonthKey(getPreviousMonth(monthKey))}
+            >
+              <MaterialCommunityIcons name="chevron-left" size={28} color={Colors.textPrimary} />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.navBtn} 
+              onPress={() => setMonthKey(getNextMonth(monthKey))}
+              disabled={monthKey === currentMonthKey()}
+            >
+              <MaterialCommunityIcons 
+                name="chevron-right" 
+                size={28} 
+                color={monthKey === currentMonthKey() ? Colors.textMuted : Colors.textPrimary} 
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
 
         {/* Stats snapshot */}
         <View style={styles.statsCard}>
@@ -224,7 +250,29 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   content: { padding: Spacing.lg },
   title: { fontSize: FontSize.xxl, fontWeight: FontWeight.heavy, color: Colors.textPrimary, marginBottom: 4 },
-  subtitle: { fontSize: FontSize.sm, color: Colors.textSecondary, marginBottom: Spacing.xl },
+  subtitle: { fontSize: FontSize.sm, color: Colors.textSecondary },
+  
+  headerRow: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'flex-start',
+    marginBottom: Spacing.xl 
+  },
+  navButtons: { 
+    flexDirection: 'row', 
+    gap: Spacing.sm,
+    marginTop: 4
+  },
+  navBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
   statsCard: {
     backgroundColor: Colors.card, borderRadius: Radius.lg, borderWidth: 1,
