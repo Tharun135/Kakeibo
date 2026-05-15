@@ -8,25 +8,27 @@ const CONFIG_KEY = '@kakeibo/config';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface AppConfig {
-  weeklyReminderHour: number; // 0-23
-  weeklyReminderMinute: number; // 0-59
-  weeklyDay: number; // 1-7 (1=Sun, 2=Mon... in Expo Notifications)
-  monthlyReminderHour: number; // 0-23
-  monthlyReminderMinute: number; // 0-59
-  monthlyDate: number; // 1-31
+  weeklyReminderHour: number;
+  weeklyReminderMinute: number;
+  weeklyDay: number;
+  monthlyReminderHour: number;
+  monthlyReminderMinute: number;
+  monthlyDate: number;
   remindersEnabled: boolean;
   biometricEnabled: boolean;
+  ccLimit: number; // Monthly credit card spend limit (0 = disabled)
 }
 
 const DEFAULT_CONFIG: AppConfig = {
   weeklyReminderHour: 20,
   weeklyReminderMinute: 0,
-  weeklyDay: 1, // Sunday
+  weeklyDay: 1,
   monthlyReminderHour: 9,
   monthlyReminderMinute: 0,
-  monthlyDate: 1, // 1st
+  monthlyDate: 1,
   remindersEnabled: false,
   biometricEnabled: false,
+  ccLimit: 0,
 };
 
 export async function getConfig(): Promise<AppConfig> {

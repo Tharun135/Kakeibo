@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, StatusBar,
-  RefreshControl, KeyboardAvoidingView, Platform
+  RefreshControl, KeyboardAvoidingView, Platform,
+  TextInput, TouchableOpacity
 } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Colors, FontSize, FontWeight, Radius, Spacing, CATEGORIES } from '../../constants/theme';
@@ -24,6 +25,7 @@ export default function WeeklyReviewScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [weekKey, setWeekKey] = useState('');
   const [weekRange, setWeekRange] = useState({ start: '', end: '' });
+  const [searchQuery, setSearchQuery] = useState('');
 
   const load = useCallback(async () => {
     const wk = currentWeekKey();
@@ -66,6 +68,16 @@ export default function WeeklyReviewScreen() {
   const totalUnsettled = unsettledCC.reduce((s, e) => s + e.amount, 0);
 
   const biggestCat = CATEGORIES.reduce((a, b) => (totals[a] > totals[b] ? a : b));
+
+  const searchLower = searchQuery.toLowerCase().trim();
+  const filteredExpenses = searchLower
+    ? expenses.filter(
+        (e) =>
+          (e.description ?? '').toLowerCase().includes(searchLower) ||
+          e.category.toLowerCase().includes(searchLower) ||
+          String(e.amount).includes(searchLower)
+      )
+    : expenses;
 
   const formatDate = (d: string) => {
     if (!d) return '';
@@ -147,18 +159,46 @@ export default function WeeklyReviewScreen() {
         {expenses.length > 0 && (
           <View style={{ marginTop: Spacing.xl }}>
             <Text style={styles.cardTitle}>Items This Week</Text>
-            {expenses.sort((a,b) => b.date.localeCompare(a.date)).map((e) => (
-              <ExpenseCard 
-                key={e.id} 
-                expense={e} 
-                onDelete={async (id) => {
-                  await deleteExpense(id);
-                  await load();
-                }} 
-                onSettle={handleSettle}
-                onPress={(id) => router.push({ pathname: '/edit-expense', params: { id } })}
+
+            {/* Search Bar */}
+            <View style={styles.searchContainer}>
+              <Text style={styles.searchIcon}>🔍</Text>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search by note, category or amount…"
+                placeholderTextColor={Colors.textMuted}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                clearButtonMode="while-editing"
+                returnKeyType="search"
               />
-            ))}
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearBtn}>
+                  <Text style={styles.clearBtnText}>✕</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {filteredExpenses.length === 0 ? (
+              <View style={styles.emptyCard}>
+                <Text style={styles.emptyIcon}>🔍</Text>
+                <Text style={styles.emptyText}>No results for "{searchQuery}"</Text>
+                <Text style={styles.emptyText2}>Try a different note, category or amount.</Text>
+              </View>
+            ) : (
+              filteredExpenses.sort((a,b) => b.date.localeCompare(a.date)).map((e) => (
+                <ExpenseCard 
+                  key={e.id} 
+                  expense={e} 
+                  onDelete={async (id) => {
+                    await deleteExpense(id);
+                    await load();
+                  }} 
+                  onSettle={handleSettle}
+                  onPress={(id) => router.push({ pathname: '/edit-expense', params: { id } })}
+                />
+              ))
+            )}
           </View>
         )}
 
@@ -212,6 +252,28 @@ const styles = StyleSheet.create({
   },
   emptyIcon: { fontSize: 36, marginBottom: Spacing.sm },
   emptyText: { fontSize: FontSize.md, color: Colors.textSecondary },
+  emptyText2: { fontSize: FontSize.sm, color: Colors.textMuted, marginTop: 4, textAlign: 'center' },
+
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.md,
+    height: 44,
+  },
+  searchIcon: { fontSize: 15, marginRight: Spacing.sm },
+  searchInput: {
+    flex: 1,
+    color: Colors.textPrimary,
+    fontSize: FontSize.sm,
+    paddingVertical: 0,
+  },
+  clearBtn: { padding: Spacing.xs, marginLeft: Spacing.xs },
+  clearBtnText: { color: Colors.textMuted, fontSize: FontSize.sm },
   
   debtAlert: {
     backgroundColor: Colors.danger + '12',

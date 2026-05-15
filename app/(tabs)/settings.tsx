@@ -60,6 +60,7 @@ export default function SettingsScreen() {
 
   const [incomeStr, setIncomeStr] = useState('');
   const [goalStr, setGoalStr] = useState('');
+  const [ccLimitStr, setCcLimitStr] = useState('');
   
   const [weeklyHour, setWeeklyHour] = useState('20');
   const [weeklyMinute, setWeeklyMinute] = useState('0');
@@ -135,6 +136,7 @@ export default function SettingsScreen() {
     setMonthlyDate(String(config.monthlyDate));
     setRemindersEnabled(config.remindersEnabled);
     setBiometricEnabled(config.biometricEnabled);
+    setCcLimitStr(config.ccLimit > 0 ? String(config.ccLimit) : '');
 
     const hasHardware = await LocalAuthentication.hasHardwareAsync();
     const isEnrolled = await LocalAuthentication.isEnrolledAsync();
@@ -165,6 +167,9 @@ export default function SettingsScreen() {
         income,
         saving_goal: savingGoal,
       });
+
+      const ccLimit = parseFloat(ccLimitStr) || 0;
+      await saveConfig({ ccLimit });
 
       const wh = parseInt(weeklyHour);
       const wm = parseInt(weeklyMinute);
@@ -261,6 +266,26 @@ export default function SettingsScreen() {
               maxLength={10}
             />
           </View>
+        </View>
+
+        {/* Credit Card Limit */}
+        <View style={styles.fieldGroup}>
+          <Text style={styles.fieldLabel}>CREDIT CARD MONTHLY LIMIT</Text>
+          <View style={[styles.inputRow, { borderColor: Colors.warning + '66' }]}>
+            <Text style={[styles.rupee, { color: Colors.warning }]}>₹</Text>
+            <TextInput
+              style={styles.input}
+              value={ccLimitStr}
+              onChangeText={setCcLimitStr}
+              keyboardType="numeric"
+              placeholder="0 (disabled)"
+              placeholderTextColor={Colors.textMuted}
+              maxLength={10}
+            />
+          </View>
+          <Text style={styles.ccLimitHint}>
+            💳 You will be warned when a new CC expense would exceed this limit. Set to 0 to disable.
+          </Text>
         </View>
 
         {/* Auto-calculation */}
@@ -551,6 +576,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.cardBorder, padding: Spacing.md,
   },
   infoText: { fontSize: FontSize.sm, color: Colors.textSecondary, lineHeight: 20 },
+  ccLimitHint: { fontSize: FontSize.xs, color: Colors.textMuted, marginTop: Spacing.xs, lineHeight: 18 },
   
   remindersCard: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.surface,

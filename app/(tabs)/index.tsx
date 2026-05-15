@@ -1,7 +1,8 @@
 import React, { useState, useCallback, useRef } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
-  StatusBar, RefreshControl, Animated, Platform
+  StatusBar, RefreshControl, Animated, Platform,
+  TextInput
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -24,6 +25,7 @@ export default function DashboardScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [monthLabel, setMonthLabel] = useState('');
   const [config, setConfig] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const load = useCallback(async () => {
     const monthKey = currentMonthKey();
@@ -50,6 +52,12 @@ export default function DashboardScreen() {
   const burnRatio = spendable > 0 ? Math.min(1, spent / spendable) : 0;
   const todayExpenses = expenses.filter((e) => e.date === today).sort((a, b) => b.amount - a.amount);
 
+  const ccLimit = config?.ccLimit ?? 0;
+  const ccSpent = expenses
+    .filter((e) => e.date.startsWith(monthKey) && e.paymentMethod === 'Credit Card')
+    .reduce((s, e) => s + e.amount, 0);
+  const ccRatio = ccLimit > 0 ? Math.min(1, ccSpent / ccLimit) : 0;
+
   const handleDelete = async (id: string) => {
     await deleteExpense(id);
     await load();
@@ -61,6 +69,16 @@ export default function DashboardScreen() {
   const currentMonthExpenses = expenses
     .filter((e) => e.date.startsWith(monthKey))
     .sort((a, b) => b.date.localeCompare(a.date) || b.amount - a.amount);
+
+  const searchLower = searchQuery.toLowerCase().trim();
+  const filteredExpenses = searchLower
+    ? currentMonthExpenses.filter(
+        (e) =>
+          (e.description ?? '').toLowerCase().includes(searchLower) ||
+          e.category.toLowerCase().includes(searchLower) ||
+          String(e.amount).includes(searchLower)
+      )
+    : currentMonthExpenses;
 
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const flipAnim = useRef(new Animated.Value(0)).current;
@@ -214,11 +232,63 @@ export default function DashboardScreen() {
           </View>
         )}
 
+        {/* Credit Card Limit Bar */}
+        {ccLimit > 0 && (
+          <View style={styles.ccLimitCard}>
+            <View style={styles.burnHeader}>
+              <Text style={styles.burnLabel}>💳 CC Monthly Limit</Text>
+              <Text style={styles.burnPct}>{Math.round(ccRatio * 100)}% used</Text>
+            </View>
+            <View style={styles.burnTrack}>
+              <View
+                style={[
+                  styles.burnFill,
+                  {
+                    width: `${ccRatio * 100}%` as any,
+                    backgroundColor: ccRatio > 0.9 ? Colors.danger : ccRatio > 0.7 ? Colors.warning : Colors.success,
+                  },
+                ]}
+              />
+            </View>
+            <View style={styles.burnFooter}>
+              <View>
+                <Text style={styles.burnSub}>SPENT ON CC</Text>
+                <Text style={[styles.burnVal, { color: ccRatio > 0.9 ? Colors.danger : Colors.warning }]}>{formatCurrency(ccSpent)}</Text>
+              </View>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={styles.burnSub}>LIMIT</Text>
+                <Text style={[styles.burnVal, { color: Colors.textSecondary }]}>{formatCurrency(ccLimit)}</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
         {/* Recent activity */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Recent Spending</Text>
           <Text style={styles.sectionSub}>{formatCurrency(spent)} total</Text>
         </View>
+
+        {/* Search Bar */}
+        {currentMonthExpenses.length > 0 && (
+          <View style={styles.searchContainer}>
+            <Text style={styles.searchIcon}>🔍</Text>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search by note, category or amount…"
+              placeholderTextColor={Colors.textMuted}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              clearButtonMode="while-editing"
+              returnKeyType="search"
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearBtn}>
+                <Text style={styles.clearBtnText}>✕</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
 
         {currentMonthExpenses.length === 0 ? (
           <View style={styles.emptyCard}>
@@ -226,8 +296,14 @@ export default function DashboardScreen() {
             <Text style={styles.emptyText}>No expenses recorded this month.</Text>
             <Text style={styles.emptyHint}>Tap + to start your KAKEIBO journey.</Text>
           </View>
+        ) : filteredExpenses.length === 0 ? (
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyIcon}>🔍</Text>
+            <Text style={styles.emptyText}>No results for "{searchQuery}"</Text>
+            <Text style={styles.emptyHint}>Try a different note, category or amount.</Text>
+          </View>
         ) : (
-          currentMonthExpenses.map((e) => (
+          filteredExpenses.map((e) => (
             <ExpenseCard 
               key={e.id} 
               expense={e} 
@@ -309,9 +385,38 @@ const styles = StyleSheet.create({
   bucketSub: { fontSize: FontSize.xs, color: Colors.textSecondary },
   bucketValue: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.warning },
 
+  ccLimitCard: {
+    backgroundColor: Colors.card, borderRadius: Radius.lg, borderWidth: 1,
+    borderColor: Colors.warning + '44', padding: Spacing.lg, marginBottom: Spacing.md,
+  },
+
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.md },
   sectionTitle: { fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.textPrimary },
   sectionSub: { fontSize: FontSize.md, fontWeight: FontWeight.semibold, color: Colors.accent },
+
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.card,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.md,
+    height: 44,
+  },
+  searchIcon: { fontSize: 15, marginRight: Spacing.sm },
+  searchInput: {
+    flex: 1,
+    color: Colors.textPrimary,
+    fontSize: FontSize.sm,
+    paddingVertical: 0,
+  },
+  clearBtn: {
+    padding: Spacing.xs,
+    marginLeft: Spacing.xs,
+  },
+  clearBtnText: { color: Colors.textMuted, fontSize: FontSize.sm },
   emptyCard: {
     backgroundColor: Colors.card, borderRadius: Radius.lg, borderWidth: 1,
     borderColor: Colors.cardBorder, padding: Spacing.xl, alignItems: 'center',

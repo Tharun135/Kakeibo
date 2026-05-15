@@ -5,8 +5,8 @@ import {
 } from 'react-native';
 import uuid from 'react-native-uuid';
 import { Colors, FontSize, FontWeight, Radius, Spacing, CATEGORIES, CategoryMeta, type Category } from '../../constants/theme';
-import { todayString } from '../../utils/dateUtils';
-import { addExpense } from '../../utils/db';
+import { todayString, currentMonthKey, formatCurrency } from '../../utils/dateUtils';
+import { addExpense, getConfig, getAllExpenses } from '../../utils/db';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 import { Calendar } from 'react-native-calendars';
@@ -20,6 +20,21 @@ export default function AddExpenseScreen() {
   const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Credit Card'>('Cash');
   const [saving, setSaving] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [ccLimit, setCcLimit] = useState(0);
+  const [currentCCSpend, setCurrentCCSpend] = useState(0);
+
+  React.useEffect(() => {
+    (async () => {
+      const config = await getConfig();
+      setCcLimit(config.ccLimit ?? 0);
+      const mk = currentMonthKey();
+      const all = await getAllExpenses();
+      const monthCC = all
+        .filter((e) => e.date.startsWith(mk) && e.paymentMethod === 'Credit Card')
+        .reduce((s, e) => s + e.amount, 0);
+      setCurrentCCSpend(monthCC);
+    })();
+  }, []);
 
   const handleSave = async () => {
     const parsed = parseFloat(amount.replace(/,/g, ''));
@@ -32,6 +47,31 @@ export default function AddExpenseScreen() {
       return;
     }
 
+    // Credit card limit check
+    if (paymentMethod === 'Credit Card' && ccLimit > 0) {
+      const newTotal = currentCCSpend + parsed;
+      if (newTotal > ccLimit) {
+        const over = newTotal - ccLimit;
+        let userConfirmed = false;
+        await new Promise<void>((resolve) => {
+          Alert.alert(
+            '🚨 CC Limit Exceeded',
+            `This expense would bring your monthly Credit Card spend to ${formatCurrency(newTotal)}, which is ${formatCurrency(over)} over your ${formatCurrency(ccLimit)} limit.\n\nAre you sure you want to proceed?`,
+            [
+              { text: 'Cancel', style: 'cancel', onPress: () => resolve() },
+              { text: 'Proceed Anyway', style: 'destructive', onPress: () => { userConfirmed = true; resolve(); } },
+            ]
+          );
+        });
+        if (!userConfirmed) return;
+      } else if (newTotal > ccLimit * 0.8) {
+        Alert.alert(
+          '⚠️ Approaching CC Limit',
+          `You have used ${formatCurrency(newTotal)} of your ${formatCurrency(ccLimit)} monthly CC limit (${Math.round((newTotal / ccLimit) * 100)}%).`
+        );
+      }
+    }
+
     setSaving(true);
     try {
       await addExpense({
@@ -41,7 +81,7 @@ export default function AddExpenseScreen() {
         description: description.trim(),
         date,
         paymentMethod,
-        isSettled: paymentMethod === 'Cash', // Cash is always "settled"
+        isSettled: paymentMethod === 'Cash',
       });
       // Reset form
       setAmount('');
@@ -49,6 +89,7 @@ export default function AddExpenseScreen() {
       setDate(todayString());
       setCategory('Needs');
       setPaymentMethod('Cash');
+      if (paymentMethod === 'Credit Card') setCurrentCCSpend((s) => s + parsed);
       Alert.alert('✓ Expense Saved', `${description} — ₹${parsed.toLocaleString('en-IN')} recorded.`);
     } finally {
       setSaving(false);
